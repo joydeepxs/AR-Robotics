@@ -1,0 +1,64 @@
+// Define the pin connections
+const int trigPin = 2;    // Trig pin of the ultrasonic sensor
+const int echoPin = 3;    // Echo pin of the ultrasonic sensor
+
+// Constants for tank levels
+const int EMPTY_DISTANCE = 7;  // Distance in cm when the tank is empty
+const int FULL_DISTANCE = 1;   // Distance in cm when the tank is full
+
+// Define the LED pins
+const int ledPins[] = {4, 5, 6, 7, 8, 9, 10, 11};
+
+void setup() {
+  // Initialize the serial communication
+  Serial.begin(9600);
+
+  // Configure the ultrasonic sensor pins
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  // Configure LED pins
+  for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++) {
+    pinMode(ledPins[i], OUTPUT);
+  }
+}
+
+void loop() {
+  // Send a pulse to the ultrasonic sensor
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Measure the duration of the echo signal
+  long duration = pulseIn(echoPin, HIGH);
+
+  // Calculate the distance based on the speed of sound
+  float distance = duration * 0.034 / 2;
+
+  // Print the water level to the serial monitor
+  Serial.print("Water level: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // Calculate and display the tank level on the LEDs
+  int tankLevel = map(distance, EMPTY_DISTANCE, FULL_DISTANCE, 0, sizeof(ledPins) / sizeof(ledPins[0]));
+  if (tankLevel > sizeof(ledPins) / sizeof(ledPins[0])) {
+    tankLevel = sizeof(ledPins) / sizeof(ledPins[0]);
+  } else if (tankLevel < 0) {
+    tankLevel = 0;
+  }
+
+  // Turn on LEDs based on the tank level
+  for (int i = 0; i < sizeof(ledPins) / sizeof(ledPins[0]); i++) {
+    if (i < tankLevel) {
+      digitalWrite(ledPins[i], HIGH);
+    } else {
+      digitalWrite(ledPins[i], LOW);
+    }
+  }
+
+  // Delay before taking the next measurement
+  delay(1000);
+}
